@@ -318,35 +318,106 @@ window.addEventListener('DOMContentLoaded', () => {
   //Slider 1
 
   const slides = document.querySelectorAll('.offer__slide'),
+    slider = document.querySelector('.offer__slider'),
+    slideToNext = document.querySelector('.offer__slider-next'),
+    slideToPrev = document.querySelector('.offer__slider-prev'),
     slideCurrent = document.querySelector('#current'),
     slideTotal = document.querySelector('#total'),
-    slideToNext = document.querySelector('.offer__slider-next'),
-    slideToPrev = document.querySelector('.offer__slider-prev');
+    slidesWrapper = document.querySelector('.offer__slider-wrapper'),
+    slidesField = document.querySelector('.offer__slider-inner'),
+    width = window.getComputedStyle(slidesWrapper).width;
 
-  slideTotal.textContent =
-    slides.length < 10 ? `0${slides.length}` : slides / length;
-  slideCurrent.textContent = '01';
+  let slideIndex = 1;
+  let offset = 0;
+  let dots = [];
 
-  let index = 0;
-
-  function showSlide(index) {
-    slides[index].classList.remove('hide');
-    slideCurrent.textContent = index < 10 ? `0${index + 1}` : index + 1;
+  if (slides.length < 10) {
+    slideTotal.textContent = `0${slides.length}`;
+    slideCurrent.textContent = `0${slideIndex}`;
+  } else {
+    slideTotal.textContent = slides.length;
+    slideCurrent.textContent = slideIndex;
   }
-  function hideSlide(index) {
-    slides[index].classList.add('hide');
-    slideCurrent.textContent = index < 10 ? `0${index + 1}` : index + 1;
+
+  slidesField.style.width = 100 * slides.length + '%';
+  slidesField.style.display = 'flex';
+  slidesField.style.transition = '0.5s all';
+
+  slidesWrapper.style.overflow = 'hidden';
+
+  slides.forEach((slide) => {
+    slide.style.width = width;
+  });
+
+  slider.style.position = 'relative';
+
+  const indicators = document.createElement('ol');
+  indicators.classList.add('carousel-indicators');
+  slider.append(indicators);
+
+  for (let i = 0; i < slides.length; i++) {
+    const dot = document.createElement('li');
+    dot.setAttribute('data-slide-to', i + 1);
+    dot.classList.add('dot');
+
+    if (i === 0) {
+      dot.style.opacity = 1;
+    }
+
+    indicators.append(dot);
+    dots.push(dot);
   }
 
   slideToNext.addEventListener('click', () => {
-    hideSlide(index);
-    index === 3 ? (index = 0) : index++;
-    showSlide(index);
+    if (offset == +width.slice(0, width.length - 2) * (slides.length - 1)) {
+      offset = 0;
+    } else {
+      offset += +width.slice(0, width.length - 2);
+    }
+
+    slidesField.style.transform = `translate(-${offset}px)`;
+    slideIndex == slides.length ? (slideIndex = 1) : slideIndex++;
+    addZero(slideCurrent);
+    changeDots(dots, slideIndex);
   });
 
   slideToPrev.addEventListener('click', () => {
-    hideSlide(index);
-    index === 0 ? (index = 3) : index--;
-    showSlide(index);
+    console.log('PREV');
+    if (offset == 0) {
+      offset = +width.slice(0, width.length - 2) * (slides.length - 1);
+    } else {
+      offset -= +width.slice(0, width.length - 2);
+    }
+
+    slidesField.style.transform = `translate(-${offset}px)`;
+
+    slideIndex == 1 ? (slideIndex = slides.length) : slideIndex--;
+
+    addZero(slideCurrent);
+    changeDots(dots, slideIndex);
   });
+
+  dots.forEach((dot) => {
+    dot.addEventListener('click', (e) => {
+      const slideTo = e.target.getAttribute('data-slide-to');
+
+      slideIndex = slideTo;
+      offset = +width.slice(0, width.length - 2) * (slideTo - 1);
+
+      slidesField.style.transform = `translate(-${offset}px)`;
+
+      addZero(slideCurrent);
+      changeDots(dots, slideIndex);
+    });
+  });
+
+  function changeDots(dots, index) {
+    dots.forEach((dot) => (dot.style.opacity = 0.5));
+    dots[index - 1].style.opacity = 1;
+  }
+
+  function addZero(slide) {
+    if (slides.length < 10) slide.textContent = `0${slideIndex}`;
+    else slide.textContent = slideIndex;
+  }
 });
